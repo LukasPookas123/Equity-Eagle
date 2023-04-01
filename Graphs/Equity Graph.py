@@ -36,9 +36,6 @@ def equity_graph(df):
 		spikedash="solid",
 		spikethickness=2
 		)
-	fig.update_layout(
-		plot_bgcolor="white"
-		)
 	fig.update_xaxes(
 	    rangeslider_visible=False,
 	    rangeselector=dict(
@@ -87,7 +84,8 @@ def equity_graph(df):
 		xaxis_rangeselector_font_color='white',
 		xaxis_rangeselector_activecolor='grey',
 		xaxis_rangeselector_bgcolor='navy',
-		hovermode='x'
+		hovermode='x',
+		plot_bgcolor="white"
 		)
 	fig.show()
 
