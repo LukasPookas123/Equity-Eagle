@@ -5,6 +5,7 @@ from streamlit_card import card
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
+#from numerize import numerize
 
 @st.cache_data
 def load_data():
@@ -83,19 +84,51 @@ def main():
 
     # HORIZONTAL BAR CHART
 
+    x_plot = [20, 14, 23, 12, 24]
+    y_plot = ['giraffes', 'orangutans', 'monkeys', 'animal1', 'animal2']
+
     fig = go.Figure()
     fig.add_trace(go.Bar(
-        y=['giraffes', 'orangutans', 'monkeys', 'animal1', 'animal2'],
-        x=[20, 14, 23, 12, 24],
-        name='SF Zoo',
+        y=y_plot,
+        x=x_plot,
         orientation='h',
+        name='SF Zoo',
         marker=dict(
             color='rgba(58, 71, 80, 0.15)',
             line=dict(color='rgba(58, 71, 80, 1.0)', width=3)
-        )
-    ))
+        ),
+        text = [
+			f'{x_plot[4]}',
+			f'{x_plot[3]}',
+			f'{x_plot[2]}',
+            f'{x_plot[1]}',
+            f'{x_plot[0]}',
+			]
+		)
+    )
 
-    fig.update_layout(barmode='stack', xaxis_title="Price to Earnings Ratio")
+    fig.update_layout(barmode='stack', xaxis_title="Price to Earnings Ratio", shapes=[
+        dict(
+        type= 'line',
+        yref= 'paper', y0= 0, y1= 1,
+        xref= 'x', x0= sum(x_plot)/len(x_plot), x1= sum(x_plot)/len(x_plot)
+        )
+    ])
+
+    fig.add_annotation(x=(sum(x_plot)/len(x_plot))-1,
+                       y=5,
+                       text=f'Peer Average {sum(x_plot)/len(x_plot)}x',
+                       ax=0,
+                       ay=0,
+                       font=dict(size=15, color="black"))
+    
+    fig.update_traces (
+		textfont_size=12,
+		textangle=0,
+		textposition="outside",
+		cliponaxis=False
+	)
+
     st.plotly_chart(fig)
 
 if __name__ == '__main__':
