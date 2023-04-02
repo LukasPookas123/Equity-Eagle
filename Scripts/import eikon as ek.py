@@ -1,6 +1,5 @@
 import eikon as ek
 import pandas as pd
-import refinitiv.dataplatform as rdp
 import datetime as dt
 import os
 from bs4 import BeautifulSoup
@@ -74,7 +73,8 @@ for ticker in RICs:
         'TR.F.EVToEBIT','TR.F.EVToEBITDA','TR.EVToSales(1D)','TR.FwdPtoEPSSmartEst','TR.PriceToBVPerShare',
         'TR.PriceToCFPerShare','TR.PriceClose/TR.FreeOperatingCashFlowperShareAvgDilutedSharesOut','TR.Volatility260D/100'
         'TR.ReturnonAvgTotEqtyPctNetIncomeBeforeExtraItems/100', 'TR.ROATotalAssetsPercent/100','TR.GrossMargin/100',
-        'TR.NetIncome/TR.Revenue','TR.LTDebtToTtlEqtyPct/100','TR.LTDebtToTtlCapitalPct/100','TR.TimesInterestEarned'
+        'TR.NetIncome/TR.Revenue','TR.LTDebtToTtlEqtyPct/100','TR.LTDebtToTtlCapitalPct/100','TR.TimesInterestEarned',
+        'PERATIO'
         ])
         df['Price / EPS (SmartEstimate ®)'] = pd.to_numeric(df['Price / EPS (SmartEstimate ®)'],errors='coerce') #remove nan string in starMine col
         df = df.dropna(axis=0,how='any')
