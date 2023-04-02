@@ -390,8 +390,9 @@ st.plotly_chart(fig,use_container_width=True)
 
 
 st.subheader('1.7 Peer Volatility Comparison')
-# fig = volatility()
-# st.plotly_chart(fig,use_container_width=True)
+fig = volatility('AAPL.OQ')
+st.plotly_chart(fig,use_container_width=True)
+
 
 st.subheader('1.8 NLTK Ajusted News')
 col1, col2, col3 = st.columns([1,2,5])
