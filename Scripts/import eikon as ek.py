@@ -28,7 +28,7 @@ class csvConstructor():
 
         #need to check if ticker user inputted in top 5000? design decision tbd
         #check if ticker downloaded
-        dataPath = "Data\\{}".format(ticker)
+        dataPath = "Equity-Eagle\\Data\\{}".format(ticker)
         temp = os.path.exists(dataPath)
         if os.path.isdir(dataPath):
             #get news df
@@ -57,6 +57,8 @@ class csvConstructor():
             df.to_csv(path_or_buf=dataPath+"\\News.csv",mode='w')
 
             #ADD IN PRICE UPDATE EACH SEARCH
+            df = ek.get_timeseries(ticker,'CLOSE',interval='daily',start_date=start,end_date=now)
+            df.to_csv(path_or_buf = dataPath + "\Prices.csv")
 
         else:
             #make dir and add 
