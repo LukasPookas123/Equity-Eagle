@@ -39,7 +39,7 @@ external_stylesheets = [
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = "Fundamental Analysis"
 
-name_df = pd.read_csv("C:/Users/luke-/Documents/My Stuff/1 - PY PROJECTS/Equity-Eagle/AllStockNames.csv")
+name_df = pd.read_csv("Equity-Eagle/AllStockNames.csv")
 
 names = name_df['Updated at 18:21:34'].tolist()
 
@@ -102,13 +102,6 @@ app.layout = html.Div(
                     ),
                     className="card",
                 ),
-                # html.Div(
-                #     children=dcc.Graph(
-                #         id="volume-chart",
-                #         config={"displayModeBar": False},
-                #     ),
-                #     className="card",
-                # ),
             ],
             className="wrapper",
         ),
