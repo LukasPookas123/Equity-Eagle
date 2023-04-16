@@ -18,9 +18,9 @@ def get_stock_data(symbol, start_date, end_date):
             'TR.PriceToCFPerShare','TR.PriceClose/TR.FreeOperatingCashFlowperShareAvgDilutedSharesOut', 'TR.Volatility260D/100',
             'TR.ReturnonAvgTotEqtyPctNetIncomeBeforeExtraItems/100', 'TR.ROATotalAssetsPercent/100','TR.GrossMargin/100',
             'TR.NetIncome/TR.Revenue','TR.LTDebtToTtlEqtyPct/100','TR.LTDebtToTtlCapitalPct/100','TR.TimesInterestEarned',
-            'TR.BusinessSummary','TR.BusinessSummary','TR.OrgFoundedYear','TR.CompanyNumEmploy','TR.OrganizationWebsite',
-            'TR.Revenue','TR.CompanyMarketCap','TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare',
-            'TR.F.COGSTot','TR.DividendYield','TR.F.DivPayoutRatioPct/100', 'TR.ClosePrice.Date','TR.ClosePrice'
+            'TR.BusinessSummary','TR.BusinessSummary','TR.OrgFoundedYear','TR.CompanyNumEmploy','TR.OrganizationWebsite', 'TR.F.OthNonOpIncExpnTot(Period=FY0)',
+            'TR.Revenue','TR.CompanyMarketCap','TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare', 'TR.NetIncome', 'TR.GrossIncomeMean(Period=FY1)',
+            'TR.F.COGSTot','TR.DividendYield','TR.F.DivPayoutRatioPct/100', 'TR.ClosePrice.Date','TR.ClosePrice','TR.F.COGSInclOpMaintUtilTot(Period=FY0)',
             ],
                           {'SDate': start_date, 'EDate': end_date})
     return df
@@ -41,12 +41,15 @@ app.layout = html.Div([
         html.Button('Submit', id='submit-button', n_clicks=0),
     ]),
     dcc.Graph(id='stock-graph'),
+    dcc.Graph(id='fundamental-graph'),
+    dcc.Graph(id='income-graph'),
 ])
 
 # Define app callbacks
 @app.callback(
     Output('stock-graph', 'figure'),
     Output('fundamental-graph', 'figure'),
+    Output('income-graph', 'figure'),
     [Input('submit-button', 'n_clicks')],
     [dash.dependencies.State('symbol-input', 'value'),
      dash.dependencies.State('start-date-input', 'value'),
@@ -54,7 +57,7 @@ app.layout = html.Div([
 )
 def update_graph(n_clicks, symbol, start_date, end_date):
     df = get_stock_data(symbol, start_date, end_date)
-    return equity_graph(df)
+    return equity_graph(df), bar_fig(df['Company Market Cap'][0],df['Revenue'][0],df['Net Income Reported - Mean'][0],df['PERATIO'][0],df['Price To Sales Per Share (Daily Time Series Ratio)'][0]), income_statement_bar(df['Revenue'][0],df['Cost of Revenue incl Operation & Maintenance (Utility) Total'][0],df['Gross Income - Mean'][0],df['Net Income Reported - Mean'][0],df['Net Income Reported - Mean'][0])
 
 # All Graphs:
 # Equity Graph stylisation
@@ -164,8 +167,6 @@ def bar_fig(market_cap,revenue,earnings,pe_ratio,ps_ratio):
     fig.update_layout(
         plot_bgcolor="white",
         bargap=0,
-        height=400,
-        width=700
         )
     fig.update_xaxes(
         showticklabels=False
@@ -225,7 +226,41 @@ def bar_fig(market_cap,revenue,earnings,pe_ratio,ps_ratio):
         col=2
         )
     return fig
-
+# Income Statement Graph
+def income_statement_bar(revenue,cost_of_sales,gross_profit,net_income,earnings):
+    financials=['Revenue', 'Cost of Sales', 'Gross Profit','Other Expenses','Net Income']
+    other_expenses = gross_profit - earnings
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=financials,
+            y=[revenue,gross_profit,gross_profit,net_income,net_income],
+            showlegend=False,
+            marker_color=['navy','white','green','white','aquamarine'],
+            text=[f'${numerize.numerize(revenue)}','',f'${numerize.numerize(gross_profit)}','',f'${numerize.numerize(net_income)}']
+            )
+        )
+    fig.add_trace(
+        go.Bar(
+            x=financials,
+            y=[0,cost_of_sales,0,other_expenses,0],
+            showlegend=False,
+            marker_color=['crimson','crimson','red','crimson','red'],
+            text=['',f'${numerize.numerize(cost_of_sales)}','',f'${numerize.numerize(other_expenses)}','']
+            )
+        )
+    fig.update_layout(
+        plot_bgcolor="white",
+        barmode='stack',
+        bargap=0,
+        xaxis = dict(tickfont = dict(size=18))
+        )
+    fig.update_traces(textposition="outside",)
+    fig.update_yaxes(showticklabels=False)
+    fig.update_yaxes(showline=False)
+    fig.update_layout(xaxis = dict(tickfont = dict(size=18)))
+    fig.update_yaxes()
+    return fig
 
 # Run app
 if __name__ == '__main__':
