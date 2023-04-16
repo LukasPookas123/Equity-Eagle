@@ -25,34 +25,106 @@ def get_stock_data(symbol, start_date, end_date):
                           {'SDate': start_date, 'EDate': end_date})
     return df
 
-# Initialize Dash app
-app = dash.Dash(__name__)
+external_stylesheets = [
+    {
+        "href": (
+            "https://fonts.googleapis.com/css2?"
+            "family=Lato:wght@400;700&display=swap"
+        ),
+        "rel": "stylesheet",
+    },
+]
+
+# Initialise app
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app.title = "Fundamental Analysis"
+
+name_df = pd.read_csv("C:/Users/luke-/Documents/My Stuff/1 - PY PROJECTS/Equity-Eagle/AllStockNames.csv")
+
+names = name_df['Updated at 18:21:34'].tolist()
 
 # Define app layout
-app.layout = html.Div([
-    html.H1('Eikon Stock Data'),
-    html.Div([
-        html.Label('Enter Stock Symbol:'),
-        dcc.Input(id='symbol-input', type='text', value='AAPL.O'),
-        html.Label('Start Date (YYYY-MM-DD):'),
-        dcc.Input(id='start-date-input', type='text', value='2019-01-01'),
-        html.Label('End Date (YYYY-MM-DD):'),
-        dcc.Input(id='end-date-input', type='text', value='2022-12-31'),
-        html.Button('Submit', id='submit-button', n_clicks=0),
-    ]),
-    dcc.Graph(id='stock-graph'),
-])
+app.layout = html.Div(
+    children=[
+        html.Div(
+            children=[
+                html.H1(
+                    children="Fundamental Analysis", className="header-title"
+                ),
+                html.P(
+                    children=(
+                        "Analyze extracted company data from Refinitiv"
+                        " in the form of various charts"
+                    ),
+                    className="header-description",
+                ),
+            ],
+            className="header",
+        ),
+        html.Div(
+            children=[
+                html.Div(
+                    children=[
+                        html.Div(children="Name", className="menu-title"),
+                        dcc.Dropdown(
+                            id="name-filter",
+                            options=[
+                                {"label": name, "value": name}
+                                for name in names
+                            ],
+                            value="AAPL.O",
+                            clearable=False,
+                            className="dropdown",
+                        ),
+                    ]
+                ),
+                html.Div(
+                    children=[
+                        html.Div(
+                            children="Date Range", className="menu-title"
+                        ),
+                        dcc.DatePickerRange(
+                            id="date-range",
+                            start_date="2010-01-01",
+                            end_date="2023-01-01",
+                        ),
+                    ]
+                ),
+            ],
+            className="menu",
+        ),
+        html.Div(
+            children=[
+                html.Div(
+                    children=dcc.Graph(
+                        id="stock-graph",
+                        config={"displayModeBar": False},
+                    ),
+                    className="card",
+                ),
+                # html.Div(
+                #     children=dcc.Graph(
+                #         id="volume-chart",
+                #         config={"displayModeBar": False},
+                #     ),
+                #     className="card",
+                # ),
+            ],
+            className="wrapper",
+        ),
+    ]
+)
 
 # Define app callbacks
 @app.callback(
     Output('stock-graph', 'figure'),
-    Output('fundamental-graph', 'figure'),
-    [Input('submit-button', 'n_clicks')],
-    [dash.dependencies.State('symbol-input', 'value'),
-     dash.dependencies.State('start-date-input', 'value'),
-     dash.dependencies.State('end-date-input', 'value')]
+    #Output('fundamental-graph', 'figure'),
+    Input("name-filter", "value"),
+    Input("date-range", "start_date"),
+    Input("date-range", "end_date"),
+
 )
-def update_graph(n_clicks, symbol, start_date, end_date):
+def update_graph(symbol, start_date, end_date):
     df = get_stock_data(symbol, start_date, end_date)
     return equity_graph(df)
 
@@ -138,6 +210,7 @@ def equity_graph(df):
         plot_bgcolor="white"
         )
     return fig
+
 # Basic Fundamentals Graph
 def bar_fig(market_cap,revenue,earnings,pe_ratio,ps_ratio):
     fig = make_subplots(rows=1,cols=2,column_widths=[0.7, 0.3])
