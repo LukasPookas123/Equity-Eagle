@@ -29,7 +29,6 @@ class csvConstructor():
         #need to check if ticker user inputted in top 5000? design decision tbd
         #check if ticker downloaded
         dataPath = "Equity-Eagle\\Data\\{}".format(ticker)
-        temp = os.path.exists(dataPath)
         if os.path.isdir(dataPath):
             #get news df
             df = ek.get_news_headlines('PresetTopic:[Significant News: All] AND R:{} AND Language:LEN'.format(ticker), count=5)

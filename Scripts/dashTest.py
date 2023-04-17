@@ -14,8 +14,8 @@ ek.set_app_key('04c0e3f661bd49348d69c3aabedb8c0108cfd1e2')
 # Retrieve stock data
 def get_stock_data(symbol, start_date, end_date):
     df, err = ek.get_data(symbol, [
-            'TR.GrossMargin/100','TR.F.OthNonOpIncExpnTot(Period=FY0)',
-            'TR.Revenue','TR.CompanyMarketCap','TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare', 'TR.NetIncome', 'TR.GrossIncomeMean(Period=FY1)',
+            'TR.GrossMargin/100','TR.F.OthNonOpIncExpnTot(Period=FY0)','TR.Revenue','TR.CompanyMarketCap',
+            'TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare', 'TR.NetIncome', 'TR.GrossIncomeMean(Period=FY1)',
             'TR.ClosePrice.Date','TR.ClosePrice','TR.F.COGSInclOpMaintUtilTot(Period=FY0)',
             ],
                           {'SDate': start_date, 'EDate': end_date})
