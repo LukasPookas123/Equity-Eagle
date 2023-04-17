@@ -14,13 +14,9 @@ ek.set_app_key('04c0e3f661bd49348d69c3aabedb8c0108cfd1e2')
 # Retrieve stock data
 def get_stock_data(symbol, start_date, end_date):
     df, err = ek.get_data(symbol, [
-            'TR.F.EVToEBIT','TR.F.EVToEBITDA','TR.EVToSales(1D)','TR.FwdPtoEPSSmartEst','TR.PriceToBVPerShare',
-            'TR.PriceToCFPerShare','TR.PriceClose/TR.FreeOperatingCashFlowperShareAvgDilutedSharesOut', 'TR.Volatility260D/100',
-            'TR.ReturnonAvgTotEqtyPctNetIncomeBeforeExtraItems/100', 'TR.ROATotalAssetsPercent/100','TR.GrossMargin/100',
-            'TR.NetIncome/TR.Revenue','TR.LTDebtToTtlEqtyPct/100','TR.LTDebtToTtlCapitalPct/100','TR.TimesInterestEarned',
-            'TR.BusinessSummary','TR.BusinessSummary','TR.OrgFoundedYear','TR.CompanyNumEmploy','TR.OrganizationWebsite', 'TR.F.OthNonOpIncExpnTot(Period=FY0)',
+            'TR.GrossMargin/100','TR.F.OthNonOpIncExpnTot(Period=FY0)',
             'TR.Revenue','TR.CompanyMarketCap','TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare', 'TR.NetIncome', 'TR.GrossIncomeMean(Period=FY1)',
-            'TR.F.COGSTot','TR.DividendYield','TR.F.DivPayoutRatioPct/100', 'TR.ClosePrice.Date','TR.ClosePrice','TR.F.COGSInclOpMaintUtilTot(Period=FY0)',
+            'TR.ClosePrice.Date','TR.ClosePrice','TR.F.COGSInclOpMaintUtilTot(Period=FY0)',
             ],
                           {'SDate': start_date, 'EDate': end_date})
     return df
@@ -152,9 +148,9 @@ def bar_fig(market_cap,revenue,earnings,pe_ratio,ps_ratio):
         width = [1,1,1],
         showlegend = False,
         text = [
-            f'Earnings {numerize.numerize(earnings)}',
-            f'Revenue {numerize.numerize(revenue)}',
-            f'Market Cap {numerize.numerize(market_cap)}'
+            f'Earnings {numerize.numerize(earnings.item())}',
+            f'Revenue {numerize.numerize(revenue.item())}',
+            f'Market Cap {numerize.numerize(market_cap.item())}'
             ]
         ),row=1,col=1
     )
@@ -237,16 +233,16 @@ def income_statement_bar(revenue,cost_of_sales,gross_profit,net_income,earnings)
             y=[revenue,gross_profit,gross_profit,net_income,net_income],
             showlegend=False,
             marker_color=['navy','white','green','white','aquamarine'],
-            text=[f'${numerize.numerize(revenue)}','',f'${numerize.numerize(gross_profit)}','',f'${numerize.numerize(net_income)}']
+            text=[f'${numerize.numerize(revenue.item())}','',f'${numerize.numerize(gross_profit.item())}','',f'${numerize.numerize(net_income.item())}']
             )
         )
     fig.add_trace(
         go.Bar(
             x=financials,
-            y=[0,cost_of_sales,0,other_expenses,0],
+            y=[0,revenue-gross_profit,0,other_expenses,0],
             showlegend=False,
             marker_color=['crimson','crimson','red','crimson','red'],
-            text=['',f'${numerize.numerize(cost_of_sales)}','',f'${numerize.numerize(other_expenses)}','']
+            text=['',f'${numerize.numerize(cost_of_sales.item())}','',f'${numerize.numerize(other_expenses.item())}','']
             )
         )
     fig.update_layout(
