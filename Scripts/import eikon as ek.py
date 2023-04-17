@@ -23,13 +23,12 @@ class csvConstructor():
         start = now - dt.timedelta(days = 365*25)
 
         #initialising demo of generating timeseries for list of stock tickers
-        dataPath = os.path.abspath(os.path.join(os.getcwd(),'Data')) #goes up a dir to equity eagle then into Data dir
+        dataPath = os.path.abspath(os.path.join(os.getcwd(),'Data')) #goes up a dir to equity eagle then into Data dir - gets data path
         #get all tickers currently downloaded
 
         #need to check if ticker user inputted in top 5000? design decision tbd
         #check if ticker downloaded
         dataPath = "Equity-Eagle\\Data\\{}".format(ticker)
-        temp = os.path.exists(dataPath)
         if os.path.isdir(dataPath):
             #get news df
             df = ek.get_news_headlines('PresetTopic:[Significant News: All] AND R:{} AND Language:LEN'.format(ticker), count=5)
@@ -65,6 +64,7 @@ class csvConstructor():
 
             #add timeseries csv
             df = ek.get_timeseries(ticker,'CLOSE',interval='daily',start_date=start,end_date=now)
+            # generate folder, csv
             os.makedirs(dataPath)
             df.to_csv(path_or_buf = dataPath + "\Prices.csv")
 
@@ -77,7 +77,7 @@ class csvConstructor():
             'TR.NetIncome/TR.Revenue','TR.LTDebtToTtlEqtyPct/100','TR.LTDebtToTtlCapitalPct/100','TR.TimesInterestEarned',
             'PERATIO'
             ])
-            df['Price / EPS (SmartEstimate ®)'] = pd.to_numeric(df['Price / EPS (SmartEstimate ®)'],errors='coerce') #remove nan string in starMine col
+            df['Price / EPS (SmartEstimate ®)'] = pd.to_numeric(df['Price / EPS (SmartEstimate ®)'],errors='coerce') #remove nan string in starMine col - REMOVES DIFFERENT KINDS OF NA, NAN strings
             df = df.dropna(axis=0,how='any')
             df.to_csv(path_or_buf = dataPath + "\Peers.csv")
 

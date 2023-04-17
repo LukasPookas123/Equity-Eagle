@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go 
 from plotly.subplots import make_subplots
 from numerize import numerize
+from datetime import datetime
 
 # Eikon API key
 ek.set_app_key('04c0e3f661bd49348d69c3aabedb8c0108cfd1e2')
@@ -83,7 +84,7 @@ app.layout = html.Div(
                         dcc.DatePickerRange(
                             id="date-range",
                             start_date="2010-01-01",
-                            end_date="2023-01-01",
+                            end_date=datetime.today().strftime("%Y-%m-%d"),
                         ),
                     ]
                 ),
@@ -94,7 +95,31 @@ app.layout = html.Div(
             children=[
                 html.Div(
                     children=dcc.Graph(
-                        id="stock-graph",
+                        id="graph-one",
+                        config={"displayModeBar": False},
+                    ),
+                    className="card",
+                ),
+            ],
+            className="wrapper",
+        ),
+        html.Div(
+            children=[
+                html.Div(
+                    children=dcc.Graph(
+                        id="graph-two",
+                        config={"displayModeBar": False},
+                    ),
+                    className="card",
+                ),
+            ],
+            className="wrapper",
+        ),
+        html.Div(
+            children=[
+                html.Div(
+                    children=dcc.Graph(
+                        id="graph-three",
                         config={"displayModeBar": False},
                     ),
                     className="card",
@@ -107,16 +132,20 @@ app.layout = html.Div(
 
 # Define app callbacks
 @app.callback(
-    Output('stock-graph', 'figure'),
-    #Output('fundamental-graph', 'figure'),
+    Output('graph-one', 'figure'),
+    Output('graph-two', 'figure'),
+    Output('graph-three', 'figure'),
     Input("name-filter", "value"),
     Input("date-range", "start_date"),
     Input("date-range", "end_date"),
-
 )
 def update_graph(symbol, start_date, end_date):
     df = get_stock_data(symbol, start_date, end_date)
-    return equity_graph(df)
+    return equity_graph(df), \
+           bar_fig(df['Company Market Cap'][0],df['Revenue'][0],df['Net Income Reported - Mean'][0], \
+                   df['PERATIO'][0],df['Price To Sales Per Share (Daily Time Series Ratio)'][0]), \
+           income_statement_bar(df['Revenue'][0],df['Cost of Revenue incl Operation & Maintenance (Utility) Total'][0], \
+                                df['Gross Income - Mean'][0],df['Net Income Reported - Mean'][0],df['Net Income Reported - Mean'][0])
 
 # All Graphs:
 # Equity Graph stylisation
@@ -200,7 +229,6 @@ def equity_graph(df):
         plot_bgcolor="white"
         )
     return fig
-
 # Basic Fundamentals Graph
 def bar_fig(market_cap,revenue,earnings,pe_ratio,ps_ratio):
     fig = make_subplots(rows=1,cols=2,column_widths=[0.7, 0.3])
@@ -212,9 +240,9 @@ def bar_fig(market_cap,revenue,earnings,pe_ratio,ps_ratio):
         width = [1,1,1],
         showlegend = False,
         text = [
-            f'Earnings {numerize.numerize(earnings)}',
-            f'Revenue {numerize.numerize(revenue)}',
-            f'Market Cap {numerize.numerize(market_cap)}'
+            f'Earnings {numerize.numerize(earnings.item())}',
+            f'Revenue {numerize.numerize(revenue.item())}',
+            f'Market Cap {numerize.numerize(market_cap.item())}'
             ]
         ),row=1,col=1
     )
@@ -227,8 +255,6 @@ def bar_fig(market_cap,revenue,earnings,pe_ratio,ps_ratio):
     fig.update_layout(
         plot_bgcolor="white",
         bargap=0,
-        height=400,
-        width=700
         )
     fig.update_xaxes(
         showticklabels=False
@@ -288,7 +314,41 @@ def bar_fig(market_cap,revenue,earnings,pe_ratio,ps_ratio):
         col=2
         )
     return fig
-
+# Income Statement Graph
+def income_statement_bar(revenue,cost_of_sales,gross_profit,net_income,earnings):
+    financials=['Revenue', 'Cost of Sales', 'Gross Profit','Other Expenses','Net Income']
+    other_expenses = gross_profit - earnings
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=financials,
+            y=[revenue,gross_profit,gross_profit,net_income,net_income],
+            showlegend=False,
+            marker_color=['navy','white','green','white','aquamarine'],
+            text=[f'${numerize.numerize(revenue.item())}','',f'${numerize.numerize(gross_profit.item())}','',f'${numerize.numerize(net_income.item())}']
+            )
+        )
+    fig.add_trace(
+        go.Bar(
+            x=financials,
+            y=[0,revenue-gross_profit,0,other_expenses,0],
+            showlegend=False,
+            marker_color=['crimson','crimson','red','crimson','red'],
+            text=['',f'${numerize.numerize(cost_of_sales.item())}','',f'${numerize.numerize(other_expenses.item())}','']
+            )
+        )
+    fig.update_layout(
+        plot_bgcolor="white",
+        barmode='stack',
+        bargap=0,
+        xaxis = dict(tickfont = dict(size=18))
+        )
+    fig.update_traces(textposition="outside",)
+    fig.update_yaxes(showticklabels=False)
+    fig.update_yaxes(showline=False)
+    fig.update_layout(xaxis = dict(tickfont = dict(size=18)))
+    fig.update_yaxes()
+    return fig
 
 # Run app
 if __name__ == '__main__':
