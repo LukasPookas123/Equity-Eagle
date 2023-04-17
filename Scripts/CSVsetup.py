@@ -29,28 +29,22 @@ class csvConstructor():
         #need to check if ticker user inputted in top 5000? design decision tbd
         #check if ticker downloaded
         dataPath = "Equity-Eagle\\Data\\{}".format(ticker)
-        if os.path.isdir(dataPath):
-            #ADD IN PRICE UPDATE EACH SEARCH
-            df = ek.get_timeseries(ticker,'CLOSE',interval='daily',start_date=start,end_date=now)
-            df.to_csv(path_or_buf = dataPath + "\Prices.csv")
 
-        else:
-            #make dir and add 
+        #make dir and add 
 
-            #add timeseries csv
-            df = ek.get_timeseries(ticker,'CLOSE',interval='daily',start_date=start,end_date=now)
-            os.makedirs(dataPath)
-            df.to_csv(path_or_buf = dataPath + "\Prices.csv")
+        #add timeseries csv
+        df = ek.get_timeseries(ticker,'CLOSE',interval='daily',start_date=start,end_date=now)
+        os.makedirs(dataPath)
+        df.to_csv(path_or_buf = dataPath + "\Prices.csv")
 
-            #add fundamentals csv
-            df,err = ek.get_data(ticker,
-            [
-            'TR.GrossMargin/100','TR.F.OthNonOpIncExpnTot(Period=FY0)','TR.Revenue','TR.CompanyMarketCap',
-            'TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare', 'TR.NetIncome', 'TR.GrossIncomeMean(Period=FY1)',
-            'TR.ClosePrice.Date','TR.ClosePrice','TR.F.COGSInclOpMaintUtilTot(Period=FY0)',
-            ])
-            df = df.dropna(axis=0,how='any')
-            df.to_csv(path_or_buf = dataPath + "\Fundamentals.csv")
+        #add fundamentals csv
+        df,err = ek.get_data(ticker, [
+                'TR.GrossMargin/100','TR.F.OthNonOpIncExpnTot(Period=FY0)','TR.Revenue','TR.CompanyMarketCap',
+                'TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare', 'TR.NetIncome', 'TR.GrossIncomeMean(Period=FY1)',
+                'TR.F.COGSInclOpMaintUtilTot(Period=FY0)',
+                ],)
+        #df = df.dropna(axis=0,how='any')
+        df.to_csv(path_or_buf = dataPath + "\Fundamentals.csv")
         
 dc = csvConstructor()
 dc.testRun()

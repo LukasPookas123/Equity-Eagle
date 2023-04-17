@@ -8,18 +8,24 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from numerize import numerize
 
+# CSV mode or Eikon API mode
+offline = True
+
 # Eikon API key
 ek.set_app_key('04c0e3f661bd49348d69c3aabedb8c0108cfd1e2')
 
 # Retrieve stock data
 def get_stock_data(symbol, start_date, end_date):
-    df, err = ek.get_data(symbol, [
-            'TR.GrossMargin/100','TR.F.OthNonOpIncExpnTot(Period=FY0)','TR.Revenue','TR.CompanyMarketCap',
-            'TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare', 'TR.NetIncome', 'TR.GrossIncomeMean(Period=FY1)',
-            'TR.ClosePrice.Date','TR.ClosePrice','TR.F.COGSInclOpMaintUtilTot(Period=FY0)',
-            ],
-                          {'SDate': start_date, 'EDate': end_date})
-    return df
+    if not offline:
+        df, err = ek.get_data(symbol, [
+                'TR.GrossMargin/100','TR.F.OthNonOpIncExpnTot(Period=FY0)','TR.Revenue','TR.CompanyMarketCap',
+                'TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare', 'TR.NetIncome', 'TR.GrossIncomeMean(Period=FY1)','TR.F.COGSInclOpMaintUtilTot(Period=FY0)',
+                ])
+        df2 = ek.get_timeseries(symbol,'CLOSE',interval='daily',start_date=start_date,end_date=end_date)
+    else:
+        df = pd.read_csv("Equity-Eagle\\Data\\{}\\Fundamentals.csv".format(symbol))
+        df2 = pd.read_csv("Equity-Eagle\\Data\\{}\\Prices.csv".format(symbol))
+    return df, df2
 
 # Initialize Dash app
 app = dash.Dash(__name__)
@@ -29,7 +35,7 @@ app.layout = html.Div([
     html.H1('Eikon Stock Data'),
     html.Div([
         html.Label('Enter Stock Symbol:'),
-        dcc.Input(id='symbol-input', type='text', value='AAPL.O'),
+        dcc.Input(id='symbol-input', type='text', value='AAPL.OQ'),
         html.Label('Start Date (YYYY-MM-DD):'),
         dcc.Input(id='start-date-input', type='text', value='2019-01-01'),
         html.Label('End Date (YYYY-MM-DD):'),
@@ -52,8 +58,8 @@ app.layout = html.Div([
      dash.dependencies.State('end-date-input', 'value')]
 )
 def update_graph(n_clicks, symbol, start_date, end_date):
-    df = get_stock_data(symbol, start_date, end_date)
-    return equity_graph(df), bar_fig(df['Company Market Cap'][0],df['Revenue'][0],df['Net Income Reported - Mean'][0],df['PERATIO'][0],df['Price To Sales Per Share (Daily Time Series Ratio)'][0]), income_statement_bar(df['Revenue'][0],df['Cost of Revenue incl Operation & Maintenance (Utility) Total'][0],df['Gross Income - Mean'][0],df['Net Income Reported - Mean'][0],df['Net Income Reported - Mean'][0])
+    df,df2 = get_stock_data(symbol, start_date, end_date)
+    return equity_graph(df2), bar_fig(df['Company Market Cap'][0],df['Revenue'][0],df['Net Income Reported - Mean'][0],df['PERATIO'][0],df['Price To Sales Per Share (Daily Time Series Ratio)'][0]), income_statement_bar(df['Revenue'][0],df['Cost of Revenue incl Operation & Maintenance (Utility) Total'][0],df['Gross Income - Mean'][0],df['Net Income Reported - Mean'][0],df['Net Income Reported - Mean'][0])
 
 # All Graphs:
 # Equity Graph stylisation
@@ -62,7 +68,7 @@ def equity_graph(df):
     fig.add_trace(
         go.Scatter(
             x = df['Date'],
-            y = df['Close Price'],
+            y = df['CLOSE'],
             mode = 'lines',
             line_color ='navy'
             )
