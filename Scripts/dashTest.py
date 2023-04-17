@@ -1,8 +1,5 @@
 import eikon as ek
-import dash
-from dash import dcc
-from dash import html
-from dash.dependencies import Input, Output
+from dash import Dash, Input, Output, dcc, html
 import pandas as pd
 import plotly.graph_objects as go 
 from plotly.subplots import make_subplots
@@ -36,7 +33,7 @@ external_stylesheets = [
 ]
 
 # Initialise app
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = "Fundamental Analysis"
 
 name_df = pd.read_csv("Equity-Eagle/AllStockNames.csv")
