@@ -25,6 +25,7 @@ def get_stock_data(symbol, start_date, end_date):
     else:
         df = pd.read_csv("Equity-Eagle\\Data\\{}\\Fundamentals.csv".format(symbol))
         df2 = pd.read_csv("Equity-Eagle\\Data\\{}\\Prices.csv".format(symbol))
+        df2 = df2.set_index('Date')
     return df, df2
 
 # Initialize Dash app
@@ -67,7 +68,7 @@ def equity_graph(df):
     fig = go.Figure()
     fig.add_trace(
         go.Scatter(
-            x = df['Date'],
+            x = df.index,
             y = df['CLOSE'],
             mode = 'lines',
             line_color ='navy'
