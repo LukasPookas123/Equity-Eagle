@@ -256,9 +256,9 @@ def bar_fig(market_cap,revenue,earnings,pe_ratio,ps_ratio):
         col=2
         )
     fig.add_annotation(
-        x=25,
-        y=60,
-        text=f'{pe_ratio}x',
+        x=24,
+        y=20,
+        text=f'{round(pe_ratio, 1)}x',
         font=dict(size=30,color='navy'),
         showarrow=False,
         arrowhead=1,
@@ -266,9 +266,9 @@ def bar_fig(market_cap,revenue,earnings,pe_ratio,ps_ratio):
         col=2
         )
     fig.add_annotation(
-        x=100,
+        x=24,
         y=60,
-        text=f'{ps_ratio}x',
+        text=f'{round(ps_ratio, 1)}x',
         font=dict(size=30,color='navy'),
         showarrow=False,
         arrowhead=1,
@@ -276,8 +276,8 @@ def bar_fig(market_cap,revenue,earnings,pe_ratio,ps_ratio):
         col=2
         )
     fig.add_annotation(
-        x=25,
-        y=45,
+        x=24,
+        y=10,
         text='PE Ratio',
         font=dict(size=18,color='navy'),
         showarrow=False,
@@ -286,8 +286,8 @@ def bar_fig(market_cap,revenue,earnings,pe_ratio,ps_ratio):
         col=2
         )
     fig.add_annotation(
-        x=100,
-        y=45,
+        x=24,
+        y=50,
         text='PS Ratio',
         font=dict(size=18,color='navy'),
         showarrow=False,
