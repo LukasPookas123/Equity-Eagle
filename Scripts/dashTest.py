@@ -7,7 +7,9 @@ from numerize import numerize
 from datetime import datetime
 
 # Eikon API key
-ek.set_app_key('04c0e3f661bd49348d69c3aabedb8c0108cfd1e2')
+louis_key = '04c0e3f661bd49348d69c3aabedb8c0108cfd1e2'
+luke_key = '374e43f5a0644568896478f5e6ba69d050467a4d'
+ek.set_app_key(luke_key)
 
 # Retrieve stock data
 def get_stock_data(symbol, start_date, end_date):
@@ -37,7 +39,7 @@ external_stylesheets = [
 app = Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = "Fundamental Analysis"
 
-name_df = pd.read_csv("Equity-Eagle/AllStockNames.csv")
+name_df = pd.read_csv("C:/Users/luke-/Documents/My Stuff/1 - PY PROJECTS/Equity-Eagle/Scripts/AllStockNames.csv")
 
 names = name_df['Updated at 18:21:34'].tolist()
 
