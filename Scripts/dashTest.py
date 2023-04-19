@@ -16,7 +16,8 @@ def get_stock_data(symbol):
                 'TR.GrossMargin/100','TR.F.OthNonOpIncExpnTot(Period=FY0)','TR.Revenue','TR.CompanyMarketCap',
                 'TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare', 'TR.NetIncome', 'TR.GrossIncomeMean(Period=FY1)','TR.F.COGSInclOpMaintUtilTot(Period=FY0)',
                 ])
-    return df
+    df_date = ek.get_timeseries(symbol,'CLOSE',interval='daily', start_date='2019-01-01')
+    return df, df_date
 
 external_stylesheets = [
     {
@@ -121,8 +122,8 @@ app.layout = html.Div(
     Input("name-filter", "value"),
 )
 def update_graph(symbol):
-    df = get_stock_data(symbol)
-    return equity_graph(df), \
+    df, df_date = get_stock_data(symbol)
+    return equity_graph(df_date.index, df_date['CLOSE']), \
            bar_fig(df['Company Market Cap'][0],df['Revenue'][0],df['Net Income Reported - Mean'][0], \
                    df['PERATIO'][0],df['Price To Sales Per Share (Daily Time Series Ratio)'][0]), \
            income_statement_bar(df['Revenue'][0],df['Cost of Revenue incl Operation & Maintenance (Utility) Total'][0], \
@@ -130,12 +131,12 @@ def update_graph(symbol):
 
 # All Graphs:
 # Equity Graph stylisation
-def equity_graph(df):
+def equity_graph(dates, close_prices):
     fig = go.Figure()
     fig.add_trace(
         go.Scatter(
-            x = df['Date'],
-            y = df['Close Price'],
+            x = dates,
+            y = close_prices,
             mode = 'lines',
             line_color ='navy'
             )
