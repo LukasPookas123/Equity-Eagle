@@ -12,17 +12,11 @@ luke_key = '374e43f5a0644568896478f5e6ba69d050467a4d'
 ek.set_app_key(luke_key)
 
 # Retrieve stock data
-def get_stock_data(symbol, start_date, end_date):
+def get_stock_data(symbol):
     df, err = ek.get_data(symbol, [
-            'TR.F.EVToEBIT','TR.F.EVToEBITDA','TR.EVToSales(1D)','TR.FwdPtoEPSSmartEst','TR.PriceToBVPerShare',
-            'TR.PriceToCFPerShare','TR.PriceClose/TR.FreeOperatingCashFlowperShareAvgDilutedSharesOut', 'TR.Volatility260D/100',
-            'TR.ReturnonAvgTotEqtyPctNetIncomeBeforeExtraItems/100', 'TR.ROATotalAssetsPercent/100','TR.GrossMargin/100',
-            'TR.NetIncome/TR.Revenue','TR.LTDebtToTtlEqtyPct/100','TR.LTDebtToTtlCapitalPct/100','TR.TimesInterestEarned',
-            'TR.BusinessSummary','TR.BusinessSummary','TR.OrgFoundedYear','TR.CompanyNumEmploy','TR.OrganizationWebsite',
-            'TR.Revenue','TR.CompanyMarketCap','TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare',
-            'TR.F.COGSTot','TR.DividendYield','TR.F.DivPayoutRatioPct/100', 'TR.ClosePrice.Date','TR.ClosePrice'
-            ],
-                          {'SDate': start_date, 'EDate': end_date})
+                'TR.GrossMargin/100','TR.F.OthNonOpIncExpnTot(Period=FY0)','TR.Revenue','TR.CompanyMarketCap',
+                'TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare', 'TR.NetIncome', 'TR.GrossIncomeMean(Period=FY1)','TR.F.COGSInclOpMaintUtilTot(Period=FY0)',
+                ])
     return df
 
 external_stylesheets = [
@@ -78,18 +72,6 @@ app.layout = html.Div(
                         ),
                     ]
                 ),
-                html.Div(
-                    children=[
-                        html.Div(
-                            children="Date Range", className="menu-title"
-                        ),
-                        dcc.DatePickerRange(
-                            id="date-range",
-                            start_date="2010-01-01",
-                            end_date=datetime.today().strftime("%Y-%m-%d"),
-                        ),
-                    ]
-                ),
             ],
             className="menu",
         ),
@@ -138,11 +120,9 @@ app.layout = html.Div(
     Output('graph-two', 'figure'),
     Output('graph-three', 'figure'),
     Input("name-filter", "value"),
-    Input("date-range", "start_date"),
-    Input("date-range", "end_date"),
 )
-def update_graph(symbol, start_date, end_date):
-    df = get_stock_data(symbol, start_date, end_date)
+def update_graph(symbol):
+    df = get_stock_data(symbol)
     return equity_graph(df), \
            bar_fig(df['Company Market Cap'][0],df['Revenue'][0],df['Net Income Reported - Mean'][0], \
                    df['PERATIO'][0],df['Price To Sales Per Share (Daily Time Series Ratio)'][0]), \
