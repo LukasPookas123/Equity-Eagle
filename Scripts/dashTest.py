@@ -4,7 +4,6 @@ import pandas as pd
 import plotly.graph_objects as go 
 from plotly.subplots import make_subplots
 from numerize import numerize
-from datetime import datetime
 
 # Eikon API key
 louis_key = '04c0e3f661bd49348d69c3aabedb8c0108cfd1e2'
