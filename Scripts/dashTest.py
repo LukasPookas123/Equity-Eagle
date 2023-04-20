@@ -120,13 +120,9 @@ app.layout = html.Div(
             children=[
                 html.Div(
                     children=[
-                        dcc.Span(id="text")
-                    ],
-                    children=[
-                        dcc.Img(id="sentiment")
-                    ],
-                    children=[
-                        dcc.Span(id="score")
+                        html.Span(id="news"),
+                        #html.Img(id="sentiment"),
+                        html.Span(id="score"),
                     ],
                     className="card",
                 ),
@@ -142,8 +138,8 @@ app.layout = html.Div(
     Output('graph-two', 'figure'),
     Output('graph-three', 'figure'),
     Output('news', 'children'),
-    Output('sentiment', 'src'),
     Output('score', 'children'),
+    #Output('sentiment', 'src'),
     Input("name-filter", "value"),
 )
 def update_graph(symbol):
@@ -193,7 +189,7 @@ def update_graph(symbol):
                    df['PERATIO'][0],df['Price To Sales Per Share (Daily Time Series Ratio)'][0]), \
            income_statement_bar(df['Revenue'][0],df['Cost of Revenue incl Operation & Maintenance (Utility) Total'][0], \
                                 df['Gross Income - Mean'][0],df['Net Income Reported - Mean'][0],df['Net Income Reported - Mean'][0]), \
-           news(df_news), sentiment(df_news), score_display(sentA.sentiment.polarity)
+           news(df_news), score_display(sentA.sentiment.polarity)#, sentiment(df_news)
 
 # All Graphs:
 # Equity Graph stylisation
@@ -403,14 +399,14 @@ def income_statement_bar(revenue,cost_of_sales,gross_profit,net_income,earnings)
 def news(df):
     return df['text'][0]
 
-def sentiment(df):
-    for i in range(len(df.index)):
-        if df['Score'][i] == 'positive':
-            return "URL FOR POSITIVE IMAGE"
-        elif df['Score'][i] == 'negative':
-            return "URL FOR NEGATIVE IMAGE"
-        else:
-            return "URL FOR NEUTRAL IMAGE"
+# def sentiment(df):
+#     for i in range(len(df.index)):
+#         if df['Score'][i] == 'positive':
+#             return "URL FOR POSITIVE IMAGE"
+#         elif df['Score'][i] == 'negative':
+#             return "URL FOR NEGATIVE IMAGE"
+#         else:
+#             return "URL FOR NEUTRAL IMAGE"
 
 def score_display(number):
     return number
