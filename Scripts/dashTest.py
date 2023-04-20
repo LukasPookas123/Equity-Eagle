@@ -169,7 +169,7 @@ def update_graph(symbol):
     # df['Subjectivity'] = np.nan
     df_news['Score'] = np.nan
 
-    for idx, storyId in enumerate(df['storyId'].values):
+    for idx, storyId in enumerate(df_news['storyId'].values):
         newsText = ek.get_news_story(storyId) #get the news story
         if newsText:
             soup = BeautifulSoup(newsText,"lxml") #create a BeautifulSoup object from our HTML news article
