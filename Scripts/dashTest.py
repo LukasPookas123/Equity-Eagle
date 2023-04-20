@@ -4,6 +4,9 @@ import pandas as pd
 import plotly.graph_objects as go 
 from plotly.subplots import make_subplots
 from numerize import numerize
+from bs4 import BeautifulSoup
+from textblob import TextBlob
+import numpy as np
 
 # Eikon API key
 louis_key = '04c0e3f661bd49348d69c3aabedb8c0108cfd1e2'
@@ -17,7 +20,9 @@ def get_stock_data(symbol):
                 'TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare', 'TR.NetIncome', 'TR.GrossIncomeMean(Period=FY1)','TR.F.COGSInclOpMaintUtilTot(Period=FY0)',
                 ])
     df_date = ek.get_timeseries(symbol,'CLOSE',interval='daily', start_date='2019-01-01')
-    return df, df_date
+    df_news = ek.get_news_headlines('PresetTopic:[Significant News: All] AND R:{} AND Language:LEN'.format(symbol), count=1)
+
+    return df, df_date, df_news
 
 external_stylesheets = [
     {
@@ -111,6 +116,23 @@ app.layout = html.Div(
             ],
             className="wrapper",
         ),
+        html.Div(
+            children=[
+                html.Div(
+                    children=[
+                        dcc.Span(id="text")
+                    ],
+                    children=[
+                        dcc.Img(id="sentiment")
+                    ],
+                    children=[
+                        dcc.Span(id="score")
+                    ],
+                    className="card",
+                ),
+            ],
+            className="wrapper",
+        ),
     ]
 )
 
@@ -119,15 +141,59 @@ app.layout = html.Div(
     Output('graph-one', 'figure'),
     Output('graph-two', 'figure'),
     Output('graph-three', 'figure'),
+    Output('news', 'children'),
+    Output('sentiment', 'src'),
+    Output('score', 'children'),
     Input("name-filter", "value"),
 )
 def update_graph(symbol):
-    df, df_date = get_stock_data(symbol)
+    df, df_date, df_news = get_stock_data(symbol)
+
+    '''
+    Callback function
+
+    Input:
+        symbol: string
+
+    Output:
+        graph-one
+        graph-two
+        graph-three
+        news
+        sentiment
+        score
+
+    Code below extracts sentiment using TextBlob and BeautifulSoup (NLP) - very cool.
+    Kept some code commented out because Louis spent a lot of time on it and I don't want to delete it (GitHub Copilot autofilled that).
+    '''
+
+    #df['HTML'] = df['storyId'].apply(ek.get_news_story) #create col with article html
+    # #get sentiments and objectivity
+    # df['Polarity'] = np.nan
+    # df['Subjectivity'] = np.nan
+    df_news['Score'] = np.nan
+
+    for idx, storyId in enumerate(df['storyId'].values):
+        newsText = ek.get_news_story(storyId) #get the news story
+        if newsText:
+            soup = BeautifulSoup(newsText,"lxml") #create a BeautifulSoup object from our HTML news article
+            sentA = TextBlob(soup.get_text()) #pass the text only article to TextBlob to anaylse
+            # df['Polarity'].iloc[idx] = sentA.sentiment.polarity #write sentiment polarity back to df
+            # df['Subjectivity'].iloc[idx] = sentA.sentiment.subjectivity #write sentiment subjectivity score back to df
+            if sentA.sentiment.polarity >= 0.05: # attribute bucket to sentiment polartiy
+                score = 'positive'
+            elif  -.05 < sentA.sentiment.polarity < 0.05:
+                score = 'neutral'
+            else:
+                score = 'negative'
+            df_news['Score'].iloc[idx] = score #write score back to df
+
     return equity_graph(df_date.index, df_date['CLOSE']), \
            bar_fig(df['Company Market Cap'][0],df['Revenue'][0],df['Net Income Reported - Mean'][0], \
                    df['PERATIO'][0],df['Price To Sales Per Share (Daily Time Series Ratio)'][0]), \
            income_statement_bar(df['Revenue'][0],df['Cost of Revenue incl Operation & Maintenance (Utility) Total'][0], \
-                                df['Gross Income - Mean'][0],df['Net Income Reported - Mean'][0],df['Net Income Reported - Mean'][0])
+                                df['Gross Income - Mean'][0],df['Net Income Reported - Mean'][0],df['Net Income Reported - Mean'][0]), \
+           news(df_news), sentiment(df_news), score_display(sentA.sentiment.polarity)
 
 # All Graphs:
 # Equity Graph stylisation
@@ -211,6 +277,7 @@ def equity_graph(dates, close_prices):
         plot_bgcolor="white"
         )
     return fig
+
 # Basic Fundamentals Graph
 def bar_fig(market_cap,revenue,earnings,pe_ratio,ps_ratio):
     fig = make_subplots(rows=1,cols=2,column_widths=[0.7, 0.3])
@@ -296,6 +363,7 @@ def bar_fig(market_cap,revenue,earnings,pe_ratio,ps_ratio):
         col=2
         )
     return fig
+
 # Income Statement Graph
 def income_statement_bar(revenue,cost_of_sales,gross_profit,net_income,earnings):
     financials=['Revenue', 'Cost of Sales', 'Gross Profit','Other Expenses','Net Income']
@@ -331,6 +399,21 @@ def income_statement_bar(revenue,cost_of_sales,gross_profit,net_income,earnings)
     fig.update_layout(xaxis = dict(tickfont = dict(size=18)))
     fig.update_yaxes()
     return fig
+
+def news(df):
+    return df['text'][0]
+
+def sentiment(df):
+    for i in range(len(df.index)):
+        if df['Score'][i] == 'positive':
+            return "URL FOR POSITIVE IMAGE"
+        elif df['Score'][i] == 'negative':
+            return "URL FOR NEGATIVE IMAGE"
+        else:
+            return "URL FOR NEUTRAL IMAGE"
+
+def score_display(number):
+    return number
 
 # Run app
 if __name__ == '__main__':
