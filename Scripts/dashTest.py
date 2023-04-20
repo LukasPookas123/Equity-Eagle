@@ -9,7 +9,7 @@ from plotly.subplots import make_subplots
 from numerize import numerize
 
 # CSV mode or Eikon API mode
-offline = True
+offline = False
 
 # Eikon API key
 ek.set_app_key('04c0e3f661bd49348d69c3aabedb8c0108cfd1e2')
@@ -17,16 +17,26 @@ ek.set_app_key('04c0e3f661bd49348d69c3aabedb8c0108cfd1e2')
 # Retrieve stock data
 def get_stock_data(symbol, start_date, end_date):
     if not offline:
-        df, err = ek.get_data(symbol, [
+        fundamentals, err = ek.get_data(symbol, [
                 'TR.GrossMargin/100','TR.F.OthNonOpIncExpnTot(Period=FY0)','TR.Revenue','TR.CompanyMarketCap',
                 'TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare', 'TR.NetIncome', 'TR.GrossIncomeMean(Period=FY1)','TR.F.COGSInclOpMaintUtilTot(Period=FY0)',
                 ])
-        df2 = ek.get_timeseries(symbol,'CLOSE',interval='daily',start_date=start_date,end_date=end_date)
+        priceTS = ek.get_timeseries(symbol,'CLOSE',interval='daily',start_date=start_date,end_date=end_date)
+        peer,err = ek.get_data('PEERS("{}")'.format(symbol),
+            [
+            'TR.F.EVToEBIT','TR.F.EVToEBITDA','TR.EVToSales(1D)','TR.FwdPtoEPSSmartEst','TR.PriceToBVPerShare',
+            'TR.PriceToCFPerShare','TR.PriceClose/TR.FreeOperatingCashFlowperShareAvgDilutedSharesOut','TR.Volatility260D/100',
+            'TR.ReturnonAvgTotEqtyPctNetIncomeBeforeExtraItems/100', 'TR.ROATotalAssetsPercent/100','TR.GrossMargin/100',
+            'TR.NetIncome/TR.Revenue','TR.LTDebtToTtlEqtyPct/100','TR.LTDebtToTtlCapitalPct/100','TR.TimesInterestEarned',
+            'PERATIO'
+            ])
+        df['Price / EPS (SmartEstimate ®)'] = pd.to_numeric(df['Price / EPS (SmartEstimate ®)'],errors='coerce') #remove nan string in starMine col
+        df = df.dropna(axis=0,how='any')
     else:
-        df = pd.read_csv("Equity-Eagle\\Data\\{}\\Fundamentals.csv".format(symbol))
-        df2 = pd.read_csv("Equity-Eagle\\Data\\{}\\Prices.csv".format(symbol))
-        df2 = df2.set_index('Date')
-    return df, df2
+        fundamentals = pd.read_csv("Equity-Eagle\\Data\\{}\\Fundamentals.csv".format(symbol))
+        priceTS = pd.read_csv("Equity-Eagle\\Data\\{}\\Prices.csv".format(symbol))
+        priceTS = priceTS.set_index('Date')
+    return fundamentals, priceTS
 
 # Initialize Dash app
 app = dash.Dash(__name__)
@@ -46,6 +56,7 @@ app.layout = html.Div([
     dcc.Graph(id='stock-graph'),
     dcc.Graph(id='fundamental-graph'),
     dcc.Graph(id='income-graph'),
+    dcc.Graph(id='pe-graph')
 ])
 
 # Define app callbacks
@@ -53,23 +64,24 @@ app.layout = html.Div([
     Output('stock-graph', 'figure'),
     Output('fundamental-graph', 'figure'),
     Output('income-graph', 'figure'),
+    Output('pe-graph', 'figure')
     [Input('submit-button', 'n_clicks')],
     [dash.dependencies.State('symbol-input', 'value'),
      dash.dependencies.State('start-date-input', 'value'),
      dash.dependencies.State('end-date-input', 'value')]
 )
 def update_graph(n_clicks, symbol, start_date, end_date):
-    df,df2 = get_stock_data(symbol, start_date, end_date)
-    return equity_graph(df2), bar_fig(df['Company Market Cap'][0],df['Revenue'][0],df['Net Income Reported - Mean'][0],df['PERATIO'][0],df['Price To Sales Per Share (Daily Time Series Ratio)'][0]), income_statement_bar(df['Revenue'][0],df['Cost of Revenue incl Operation & Maintenance (Utility) Total'][0],df['Gross Income - Mean'][0],df['Net Income Reported - Mean'][0],df['Net Income Reported - Mean'][0])
+    fundamentals,priceTS = get_stock_data(symbol, start_date, end_date)
+    return equity_graph(priceTS), bar_fig(fundamentals['Company Market Cap'][0],fundamentals['Revenue'][0],fundamentals['Net Income Reported - Mean'][0],fundamentals['PERATIO'][0],fundamentals['Price To Sales Per Share (Daily Time Series Ratio)'][0]), income_statement_bar(fundamentals['Revenue'][0],fundamentals['Cost of Revenue incl Operation & Maintenance (Utility) Total'][0],fundamentals['Gross Income - Mean'][0],fundamentals['Net Income Reported - Mean'][0],fundamentals['Net Income Reported - Mean'][0])
 
 # All Graphs:
 # Equity Graph stylisation
-def equity_graph(df):
+def equity_graph(fundamentals):
     fig = go.Figure()
     fig.add_trace(
         go.Scatter(
-            x = df.index,
-            y = df['CLOSE'],
+            x = fundamentals.index,
+            y = fundamentals['CLOSE'],
             mode = 'lines',
             line_color ='navy'
             )
