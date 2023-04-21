@@ -1,5 +1,5 @@
 import eikon as ek
-from dash import Dash, Input, Output, dcc, html
+from dash import Dash, Input, Output, dcc, html, dash_table
 import pandas as pd
 import plotly.graph_objects as go 
 from plotly.subplots import make_subplots
@@ -20,7 +20,7 @@ def get_stock_data(symbol):
                 'TR.RepNetProfitMean','PERATIO','TR.PriceToSalesPerShare', 'TR.NetIncome', 'TR.GrossIncomeMean(Period=FY1)','TR.F.COGSInclOpMaintUtilTot(Period=FY0)',
                 ])
     df_date = ek.get_timeseries(symbol,'CLOSE',interval='daily', start_date='2019-01-01')
-    df_news = ek.get_news_headlines('PresetTopic:[Significant News: All] AND R:{} AND Language:LEN'.format(symbol), count=1)
+    df_news = ek.get_news_headlines('PresetTopic:[Significant News: All] AND R:{} AND Language:LEN'.format(symbol), count=5)
 
     return df, df_date, df_news
 
@@ -38,7 +38,7 @@ external_stylesheets = [
 app = Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = "Fundamental Analysis"
 
-name_df = pd.read_csv("C:/Users/luke-/Documents/My Stuff/1 - PY PROJECTS/Equity-Eagle/Scripts/AllStockNames.csv")
+name_df = pd.read_csv("Scripts\\AllStockNames.csv")
 
 names = name_df['Updated at 18:21:34'].tolist()
 
@@ -117,16 +117,10 @@ app.layout = html.Div(
             className="wrapper",
         ),
         html.Div(
-            children=[
-                html.Div(
-                    children=[
-                        html.Span(id="news"),
-                        #html.Img(id="sentiment"),
-                        html.Span(id="score"),
-                    ],
-                    className="card",
-                ),
-            ],
+            html.Div(
+                id="table",
+                className="news-card",
+            ),
             className="wrapper",
         ),
     ]
@@ -137,9 +131,7 @@ app.layout = html.Div(
     Output('graph-one', 'figure'),
     Output('graph-two', 'figure'),
     Output('graph-three', 'figure'),
-    Output('news', 'children'),
-    Output('score', 'children'),
-    #Output('sentiment', 'src'),
+    Output('table', 'children'),
     Input("name-filter", "value"),
 )
 def update_graph(symbol):
@@ -163,33 +155,12 @@ def update_graph(symbol):
     Kept some code commented out because Louis spent a lot of time on it and I don't want to delete it (GitHub Copilot autofilled that).
     '''
 
-    #df['HTML'] = df['storyId'].apply(ek.get_news_story) #create col with article html
-    # #get sentiments and objectivity
-    # df['Polarity'] = np.nan
-    # df['Subjectivity'] = np.nan
-    df_news['Score'] = np.nan
-
-    for idx, storyId in enumerate(df_news['storyId'].values):
-        newsText = ek.get_news_story(storyId) #get the news story
-        if newsText:
-            soup = BeautifulSoup(newsText,"lxml") #create a BeautifulSoup object from our HTML news article
-            sentA = TextBlob(soup.get_text()) #pass the text only article to TextBlob to anaylse
-            # df['Polarity'].iloc[idx] = sentA.sentiment.polarity #write sentiment polarity back to df
-            # df['Subjectivity'].iloc[idx] = sentA.sentiment.subjectivity #write sentiment subjectivity score back to df
-            if sentA.sentiment.polarity >= 0.05: # attribute bucket to sentiment polartiy
-                score = 'positive'
-            elif  -.05 < sentA.sentiment.polarity < 0.05:
-                score = 'neutral'
-            else:
-                score = 'negative'
-            df_news['Score'].iloc[idx] = score #write score back to df
-
     return equity_graph(df_date.index, df_date['CLOSE']), \
            bar_fig(df['Company Market Cap'][0],df['Revenue'][0],df['Net Income Reported - Mean'][0], \
                    df['PERATIO'][0],df['Price To Sales Per Share (Daily Time Series Ratio)'][0]), \
            income_statement_bar(df['Revenue'][0],df['Cost of Revenue incl Operation & Maintenance (Utility) Total'][0], \
                                 df['Gross Income - Mean'][0],df['Net Income Reported - Mean'][0],df['Net Income Reported - Mean'][0]), \
-           news(df_news), score_display(sentA.sentiment.polarity)#, sentiment(df_news)
+           news(df_news)#, score_display(sentA.sentiment.polarity), sentiment(df_news)
 
 # All Graphs:
 # Equity Graph stylisation
@@ -396,20 +367,71 @@ def income_statement_bar(revenue,cost_of_sales,gross_profit,net_income,earnings)
     fig.update_yaxes()
     return fig
 
-def news(df):
-    return df['text'][0]
+def news(df_news):
+    #df['HTML'] = df['storyId'].apply(ek.get_news_story) #create col with article html
+    # #get sentiments and objectivity
+    # df['Polarity'] = np.nan
+    # df['Subjectivity'] = np.nan
+    #df_news['Score'] = np.nan
+
+    print(df_news)
+
+    d = {'Text': [], 'Source': [], 'Sentiment': [], 'Score (/10)': []}
+
+    for idx, storyId in enumerate(df_news['storyId'].values):
+        newsText = ek.get_news_story(storyId) #get the news story
+        if newsText:
+            soup = BeautifulSoup(newsText,"lxml") #create a BeautifulSoup object from our HTML news article
+            sentA = TextBlob(soup.get_text()) #pass the text only article to TextBlob to anaylse
+            # df['Polarity'].iloc[idx] = sentA.sentiment.polarity #write sentiment polarity back to df
+            # df['Subjectivity'].iloc[idx] = sentA.sentiment.subjectivity #write sentiment subjectivity score back to df
+            if sentA.sentiment.polarity > 0.6: # attribute bucket to sentiment polartiy
+                d['Sentiment'].append('positive')
+            elif 0.2 < sentA.sentiment.polarity <= 0.6:
+                d['Sentiment'].append('neutral-positive')
+            elif -0.2 < sentA.sentiment.polarity <= 0.2:
+                d['Sentiment'].append('neutral')
+            elif -0.4 < sentA.sentiment.polarity <= -0.2:
+                d['Sentiment'].append('neutral-negative')
+            else:
+                d['Sentiment'].append('negative')
+            #df_news['Score'].iloc[idx] = score #write score back to df
+            d['Score (/10)'].append(f"{round(sentA.sentiment.polarity, 3)*10}")
+    
+    for i in range(len(df_news.index)):
+
+        if len(df_news['text'][i]) > 90:
+            d['Text'].append(df_news['text'][i][:60] + '...')
+        else:
+            d['Text'].append(df_news['text'][i])
+        d['Source'].append(df_news['sourceCode'][i][3:])
+
+        if d['Sentiment'][i] == 'positive':
+            d['Sentiment'][i] = "🟢"
+        elif d['Sentiment'][i] == 'neutral-positive':
+            d['Sentiment'][i] = "🔵"
+        elif d['Sentiment'][i] == 'neutral':
+            d['Sentiment'][i] = "🟡"
+        elif d['Sentiment'][i] == 'neutral-negative':
+            d['Sentiment'][i] = "🟠"
+        else:
+            d['Sentiment'][i] = "🔴"
+
+    df = pd.DataFrame(data=d)
+
+    return dash_table.DataTable(df.to_dict('records'), [{"name": i, "id": i} for i in df.columns])
 
 # def sentiment(df):
 #     for i in range(len(df.index)):
 #         if df['Score'][i] == 'positive':
-#             return "URL FOR POSITIVE IMAGE"
+#             return "🟢"
 #         elif df['Score'][i] == 'negative':
-#             return "URL FOR NEGATIVE IMAGE"
+#             return "🔴"
 #         else:
-#             return "URL FOR NEUTRAL IMAGE"
+#             return "🟠"
 
-def score_display(number):
-    return number
+# def score_display(number):
+#     return f"{round(number, 3)*100}/10 sentiment score"
 
 # Run app
 if __name__ == '__main__':

@@ -39,6 +39,16 @@ body {
     box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
 }
 
+.news-card{
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
+    background-color: #FFFFFF;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
 .menu {
     height: 112px;
     width: 912px;
@@ -68,4 +78,20 @@ body {
     margin-bottom: 6px;
     font-weight: bold;
     color: #222222;
+}
+
+.headline-class {
+    font-size: 21px;
+    font-weight: bold;
+    vertical-align:middle;
+}
+
+.sentiment-class {
+    font-size: 36px;
+    vertical-align:middle;
+}
+
+.score-class {
+    font-size: 15px;
+    vertical-align:middle;
 }
